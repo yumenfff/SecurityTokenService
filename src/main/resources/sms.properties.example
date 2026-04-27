@@ -1,4 +1,4 @@
-smpp.host=localhost
+smpp.host=host.docker.internal
 smpp.port=2775
 smpp.system_id=smppclient1
 smpp.password=password
