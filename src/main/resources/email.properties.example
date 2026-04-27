@@ -1,0 +1,11 @@
+email.username=your_email@gmail.com
+email.password=your_app_password
+email.from=your_email@gmail.com
+mail.smtp.host=smtp.gmail.com
+mail.smtp.port=587
+mail.smtp.auth=true
+mail.smtp.starttls.enable=true
+mail.smtp.starttls.required=true
+mail.smtp.connectiontimeout=5000
+mail.smtp.timeout=5000
+mail.smtp.writetimeout=5000

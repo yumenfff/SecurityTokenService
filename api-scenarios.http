@@ -1,0 +1,267 @@
+@baseUrl = http://localhost:8080
+@adminLogin = admin_http
+@adminPassword = admin123
+@userLogin = user_http
+@userPassword = user123
+@userIdToDelete = 2
+
+### 0) Проверка несуществующего эндпоинта (ожидается: 404)
+GET {{baseUrl}}/api/unknown
+
+### 1) Регистрация админа (ожидается: 201, или 409 если уже существует)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "login": "{{adminLogin}}",
+  "password": "{{adminPassword}}",
+  "role": "ADMIN"
+}
+
+### 2) Регистрация второго админа (ожидается: 409 Конфликт)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "login": "admin_http_2",
+  "password": "admin123",
+  "role": "ADMIN"
+}
+
+### 3) Регистрация пользователя (ожидается: 201, или 409 если уже существует)
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "login": "{{userLogin}}",
+  "password": "{{userPassword}}",
+  "role": "USER"
+}
+
+### 4) Вход админа
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "login": "{{adminLogin}}",
+  "password": "{{adminPassword}}"
+}
+
+> {%
+    let token = null;
+    if (response.body && typeof response.body === "object") {
+        token = response.body.token;
+    } else if (typeof response.body === "string") {
+        try {
+            token = JSON.parse(response.body).token;
+        } catch (e) {
+        }
+    }
+
+    if (response.status === 200 && token) {
+        client.global.set("adminToken", token);
+        client.log("adminToken saved");
+    } else {
+        client.log("admin login failed or token missing. status=" + response.status);
+    }
+%}
+
+### 5) Вход пользователя
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "login": "{{userLogin}}",
+  "password": "{{userPassword}}"
+}
+
+> {%
+    let token = null;
+    if (response.body && typeof response.body === "object") {
+        token = response.body.token;
+    } else if (typeof response.body === "string") {
+        try {
+            token = JSON.parse(response.body).token;
+        } catch (e) {
+        }
+    }
+
+    if (response.status === 200 && token) {
+        client.global.set("userToken", token);
+        client.log("userToken saved");
+    } else {
+        client.log("user login failed or token missing. status=" + response.status);
+    }
+%}
+
+### 6) Вход с неверным паролем (ожидается: 401)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "login": "{{userLogin}}",
+  "password": "wrong-pass"
+}
+
+### 7) Генерация OTP через FILE (ожидается: 201)
+POST {{baseUrl}}/api/otp/generate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "operationId": "op_file_001",
+  "destination": "file-user",
+  "channel": "FILE"
+}
+
+### 8) Валидация реального OTP из файла (ожидается: 200)
+### Проверьте otp-codes.txt и вставьте код ниже
+POST {{baseUrl}}/api/otp/validate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "operationId": "op_file_001",
+  "code": "ВСТАВЬТЕ_КОД_ИЗ_ФАЙЛА"
+}
+
+### 9) Повторная валидация уже использованного кода (ожидается: 400)
+POST {{baseUrl}}/api/otp/validate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "operationId": "op_file_001",
+  "code": "ВСТАВЬТЕ_ТОТ_ЖЕ_КОД_ИЗ_ФАЙЛА"
+}
+
+### 10) Генерация OTP через EMAIL (ожидается: 201)
+POST {{baseUrl}}/api/otp/generate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+# Вставьте свой email, на который придёт OTP
+{
+  "operationId": "op_email_001",
+  "destination": "ВСТАВЬТЕ_EMAIL",
+  "channel": "EMAIL"
+}
+
+### 11) Генерация OTP через TELEGRAM (ожидается: 201)
+POST {{baseUrl}}/api/otp/generate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "operationId": "op_tg_001",
+  "destination": "telegram-user",
+  "channel": "TELEGRAM"
+}
+
+### 12) Генерация OTP через SMS (ожидается: 201 если запущен SMPPsim, иначе 500)
+POST {{baseUrl}}/api/otp/generate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+# Вставьте номер телефона, который обрабатывает ваш SMPPsim
+{
+  "operationId": "op_sms_001",
+  "destination": "ВСТАВЬТЕ_НОМЕР",
+  "channel": "SMS"
+}
+
+### 13) Генерация OTP без токена (ожидается: 401)
+POST {{baseUrl}}/api/otp/generate
+Content-Type: application/json
+
+{
+  "operationId": "op_no_token",
+  "destination": "x",
+  "channel": "FILE"
+}
+
+### 14) Валидация с неверным кодом (ожидается: 400)
+POST {{baseUrl}}/api/otp/validate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "operationId": "op_file_001",
+  "code": "000000"
+}
+
+### 15) Пользователь пытается зайти в админский эндпоинт (ожидается: 403)
+GET {{baseUrl}}/api/admin/users
+Authorization: Bearer {{userToken}}
+
+### 16) Админ получает список пользователей (ожидается: 200)
+GET {{baseUrl}}/api/admin/users
+Authorization: Bearer {{adminToken}}
+
+### 17) Админ обновляет конфигурацию OTP (ожидается: 200)
+PUT {{baseUrl}}/api/admin/otp-config
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "ttlSeconds": 600,
+  "codeLength": 8
+}
+
+### 18) Обновление конфига с недопустимой длиной кода (ожидается: 400)
+PUT {{baseUrl}}/api/admin/otp-config
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "ttlSeconds": 300,
+  "codeLength": 1
+}
+
+### 19) Обновление конфига с недопустимым TTL (ожидается: 400)
+PUT {{baseUrl}}/api/admin/otp-config
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "ttlSeconds": -1,
+  "codeLength": 6
+}
+
+### 20) Генерация OTP с коротким TTL для теста истечения (ожидается: 201)
+### Сначала установите TTL = 5 секунд через шаг 19, затем запустите этот запрос
+POST {{baseUrl}}/api/otp/generate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "operationId": "op_expire_test",
+  "destination": "expire-user",
+  "channel": "FILE"
+}
+
+### 21) Валидация истёкшего OTP (ожидается: 400)
+### Подождите 10+ секунд после шага 20, затем запустите
+POST {{baseUrl}}/api/otp/validate
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{
+  "operationId": "op_expire_test",
+  "code": "000000"
+}
+
+### 22) Админ удаляет пользователя (ожидается: 200)
+DELETE {{baseUrl}}/api/admin/users/{{userIdToDelete}}
+Authorization: Bearer {{adminToken}}
+
+### 23) Повторное удаление того же пользователя (ожидается: 404)
+DELETE {{baseUrl}}/api/admin/users/{{userIdToDelete}}
+Authorization: Bearer {{adminToken}}
+
+### 24) Админ пытается удалить админа (ожидается: 400)
+DELETE {{baseUrl}}/api/admin/users/1
+Authorization: Bearer {{adminToken}}
+
+### 25) Обращение к несуществующему эндпоинту (ожидается: 404)
+GET {{baseUrl}}/api/auth/not-exists

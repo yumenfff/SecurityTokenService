@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: security-token-db
+    environment:
+      POSTGRES_DB: security_token_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - otp-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: security-token-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_DB_URL: jdbc:postgresql://postgres:5432/security_token_db
+      APP_DB_USER: postgres
+      APP_DB_PASSWORD: postgres
+      APP_PORT: 8080
+      APP_TOKEN_SECRET: your-secret-key-change-in-production
+      APP_TOKEN_TTL_MINUTES: 60
+      APP_OTP_DEFAULT_LENGTH: 6
+      APP_OTP_DEFAULT_TTL_SECONDS: 300
+      APP_OTP_SCHEDULER_FIXED_DELAY_SECONDS: 30
+      APP_FILE_OTP_PATH: /app/data/otp-codes.txt
+      APP_EMAIL_RESOURCE: /app/config/email.properties
+      APP_SMS_RESOURCE: /app/config/sms.properties
+      APP_TELEGRAM_RESOURCE: /app/config/telegram.properties
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./otp-codes.txt:/app/data/otp-codes.txt
+      - ./src/main/resources/email.properties:/app/config/email.properties
+      - ./src/main/resources/sms.properties:/app/config/sms.properties
+      - ./src/main/resources/telegram.properties:/app/config/telegram.properties
+    networks:
+      - otp-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  otp-network:
+    driver: bridge
