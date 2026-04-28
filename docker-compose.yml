@@ -36,14 +36,14 @@ services:
       APP_OTP_DEFAULT_LENGTH: 6
       APP_OTP_DEFAULT_TTL_SECONDS: 300
       APP_OTP_SCHEDULER_FIXED_DELAY_SECONDS: 30
-      APP_FILE_OTP_PATH: /app/data/otp-codes.txt
+      APP_FILE_OTP_PATH: /app/data/otp-codes
       APP_EMAIL_RESOURCE: /app/config/email.properties
       APP_SMS_RESOURCE: /app/config/sms.properties
       APP_TELEGRAM_RESOURCE: /app/config/telegram.properties
     ports:
       - "8080:8080"
     volumes:
-      - ./otp-codes.txt:/app/data/otp-codes.txt
+      - ./otp-codes:/app/data/otp-codes
       - ./src/main/resources/email.properties:/app/config/email.properties
       - ./src/main/resources/sms.properties:/app/config/sms.properties
       - ./src/main/resources/telegram.properties:/app/config/telegram.properties

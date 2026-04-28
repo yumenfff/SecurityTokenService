@@ -39,5 +39,5 @@ build/
 src/main/resources/email.properties
 src/main/resources/sms.properties
 src/main/resources/telegram.properties
-otp-codes.txt
+otp-codes/
 dependency-reduced-pom.xml

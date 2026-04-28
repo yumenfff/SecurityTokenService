@@ -100,7 +100,7 @@ curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates"
 
 #### File
 
-- Для канала `FILE` код сохраняется в файл `otp-codes.txt/otp-codes.txt` в корне проекта
+ - Для канала `FILE` код сохраняется в файл `otp-codes/otp-codes.txt` в корне проекта
 
 ### Остановка
 
@@ -245,7 +245,7 @@ docker compose down -v && docker compose up --build
 | `APP_OTP_DEFAULT_LENGTH` | Длина OTP-кода | `6`                                                  |
 | `APP_OTP_DEFAULT_TTL_SECONDS` | Время жизни OTP (сек) | `300`                                                |
 | `APP_OTP_SCHEDULER_FIXED_DELAY_SECONDS` | Интервал планировщика (сек) | `30`                                                 |
-| `APP_FILE_OTP_PATH` | Путь к файлу OTP | `otp-codes.txt`                                      |
+| `APP_FILE_OTP_PATH` | Путь к файлу/папке для OTP | `otp-codes`                                      |
 | `APP_EMAIL_RESOURCE` | Путь к `email.properties` | `email.properties`                                   |
 | `APP_SMS_RESOURCE` | Путь к `sms.properties` | `sms.properties`                                     |
 | `APP_TELEGRAM_RESOURCE` | Путь к `telegram.properties` | `telegram.properties`                                |

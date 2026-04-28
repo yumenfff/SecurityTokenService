@@ -115,7 +115,7 @@ Content-Type: application/json
 }
 
 ### 8) Валидация реального OTP из файла (ожидается: 200)
-### Проверьте otp-codes.txt и вставьте код ниже
+### Проверьте файл `otp-codes/otp-codes.txt` (в корне проекта) и вставьте код ниже
 POST {{baseUrl}}/api/otp/validate
 Authorization: Bearer {{userToken}}
 Content-Type: application/json
